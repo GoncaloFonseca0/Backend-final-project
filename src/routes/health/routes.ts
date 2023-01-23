@@ -1,5 +1,5 @@
-import type { ServerRoute } from "@hapi/hapi";
-import { health } from "./service";
+import type {ServerRoute} from '@hapi/hapi'
+import {health} from './service'
 
 // ------------------------------------------------------------------
 // route `GET /`
@@ -7,10 +7,10 @@ import { health } from "./service";
 
 /** Handles `GET /` */
 const getDefault = Object.freeze<ServerRoute>({
-  method: "GET",
-  path: "/",
+  method: 'GET',
+  path: '/',
   handler: (_req, _h) => health(),
-});
+})
 
 // ------------------------------------------------------------------
 // route `GET /cached`
@@ -18,33 +18,33 @@ const getDefault = Object.freeze<ServerRoute>({
 
 /** Handles `GET /cached` */
 const getCached = Object.freeze<ServerRoute>({
-  method: "GET",
-  path: "/cached",
+  method: 'GET',
+  path: '/cached',
   handler: async (req, h) => {
-    const { value, cached } = await req.server.methods["healthCached"]();
+    const {value, cached} = await req.server.methods['healthCached']()
 
-    const now = new Date(); // data atual
-    const lastModified = cached ? new Date(cached.stored) : now; // crian uma constante
+    const now = new Date // data atual
+    const lastModified = cached ? new Date(cached.stored) : now // crian uma constante
     const ageInSeconds = Math.ceil(
-      (now.valueOf() - lastModified.valueOf()) / 1000
-    );
+      (now.valueOf() - lastModified.valueOf()) / 1000,
+    )
 
     return h
       .response(value)
-      .header("last-modified", lastModified.toUTCString())
-      .header("age", ageInSeconds.toString());
+      .header('last-modified', lastModified.toUTCString())
+      .header('age', ageInSeconds.toString())
   },
   options: {
     cache: {
       expiresIn: 200, // 200 milliseconds
-      privacy: "public",
+      privacy: 'public',
     },
   },
-});
+})
 
 // ------------------------------------------------------------------
 // all routes
 // ------------------------------------------------------------------
 
 /** Routes of the `health` plugin  */
-export default [getDefault, getCached];
+export default [getDefault, getCached]
