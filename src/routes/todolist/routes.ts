@@ -1,5 +1,13 @@
 import type { ServerRoute, Request } from "@hapi/hapi";
-import { getAll, getOne, remove, search, ToDoList, update } from "./service";
+import {
+  toDoList,
+  getAll,
+  getOne,
+  remove,
+  search,
+  update,
+  create,
+} from "./service";
 
 /**
  * Get all movies
@@ -26,10 +34,16 @@ const getAllList = Object.freeze<ServerRoute>({
 const postList = Object.freeze<ServerRoute>({
   method: "POST",
   path: "/",
-  handler: async (req: Request<{ Payload: ToDoList }>, h) => {
-    return "hello postList";
-
-    // refer to https://www.rfc-editor.org/rfc/rfc9110.html#name-location
+  options: {
+    validate: {
+      payload: (v: unknown) => toDoList.parseAsync(v),
+    },
+  },
+  handler: async (req: Request<{ Payload: toDoList }>, h) => {
+    const mongo = req.mongo;
+    const todolist = req.payload;
+    const res = await create(mongo, todolist);
+    return h.response(res).code(201);
   },
 });
 
@@ -41,7 +55,9 @@ const getOneList = Object.freeze<ServerRoute>({
   method: "GET",
   path: "/{id}",
   handler: async (req, _h) => {
-    return getOne;
+    const { mongo } = req;
+    const { id } = req.params;
+    return getOne(mongo, id);
   },
 });
 
@@ -52,12 +68,19 @@ const getOneList = Object.freeze<ServerRoute>({
 const putList = Object.freeze<ServerRoute>({
   method: "PUT",
   path: "/{id}",
+  options: {
+    validate: {
+      payload: (v: unknown) => toDoList.parseAsync(v),
+    },
+  },
+  handler: async (req: Request<{ Payload: toDoList }>, h) => {
+    // get data from request
+    const { mongo } = req;
+    const { id } = req.params;
+    const toDoList = req.payload;
 
-  handler: async (req: Request<{ Payload: ToDoList }>, h) => {
-    // const { mongo } = req;
-    // const { id } = req.params;
-    // const toDoList = req.payload;
-    return "hello putList";
+    // call handler (request-agnostic)
+    return update(mongo, id, toDoList);
   },
 });
 
@@ -69,7 +92,12 @@ const deleteToDoList = Object.freeze<ServerRoute>({
   method: "DELETE",
   path: "/{id}",
   handler: async (req, _h) => {
-    return "hello delete";
+    // get data from request
+    const { mongo } = req;
+    const { id } = req.params;
+
+    // call handler (request-agnostic)
+    return remove(mongo, id);
   },
 });
 
@@ -77,16 +105,25 @@ const deleteToDoList = Object.freeze<ServerRoute>({
  * Get all movies
  * @handle `GET /search`
  */
+/**
+ * Get all tasks
+ * @handle `GET /search`
+ */
 const getSearch = Object.freeze<ServerRoute>({
   method: "GET",
   path: "/search",
   handler: async (req, _h) => {
-    const { mongo } = req;
+    // get data from request
+    const mongo = req.mongo;
     const term = req.query.term;
+
+    // call handler (request-agnostic)
     return search(mongo, term);
   },
 });
-
+/**
+ * Routes of the plugin `todolist`
+ */
 export default [
   getAllList,
   postList,

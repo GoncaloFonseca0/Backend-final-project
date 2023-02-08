@@ -2,59 +2,57 @@ import { HapiMongo } from "hapi-mongodb";
 import z from "zod";
 
 /** Zod schema to validate one object with name and age */
-export const ToDoList = z.object({
-  title: z.string(),
-  year: z.number().int().min(1890),
+export const toDoList = z.object({
+  description: z.string(),
+  done: z.boolean(),
+  dueDate: z.coerce.date(),
 });
-export type ToDoList = z.infer<typeof ToDoList>;
-
-// const projection = {title: 1, year: 1}
-const projection = Object.fromEntries(
-  Object.keys(ToDoList.shape).map((k) => [k, 1])
-);
+export type toDoList = z.infer<typeof toDoList>;
 
 export const getAll = async (mongo: HapiMongo, offset: number, limit: number) =>
   mongo.db
-    .collection("ToDoList")
+    .collection("todo")
     .find({}, { projection })
-    .sort({ metacritic: -1 })
+    .sort({})
     .skip(offset)
     .limit(limit)
     .toArray();
 
-export const create = async (mongo: HapiMongo, movie: ToDoList) =>
-  mongo.db.collection("ToDoList").insertOne(movie);
+export const create = async (mongo: HapiMongo, todolist: toDoList) =>
+  mongo.db.collection("todo").insertOne(todolist);
 
-export const getOne = async (mongo: HapiMongo, id: string) =>
+export const getOne = (mongo: HapiMongo, id: string) =>
   mongo.db
-    .collection("ToDolist")
+    .collection("todo")
     .findOne({ _id: new mongo.ObjectId(id) }, { projection });
 
-export const update = async (
-  mongo: HapiMongo,
-  id: string,
-  ToDoList: ToDoList
-) =>
+// Update a task to the database PUT
+export const update = (mongo: HapiMongo, id: string, task: toDoList) =>
   mongo.db
-    .collection("ToDoList")
-    .updateOne({ _id: new mongo.ObjectID(id) }, { $set: ToDoList });
+    .collection("Todo-List")
+    .updateOne({ _id: new mongo.ObjectID(id) }, { $set: toDoList });
 
 export const remove = async (mongo: HapiMongo, id: string) =>
-  mongo.db.collection("ToDoList").deleteOne({ _id: new mongo.ObjectID(id) });
+  mongo.db.collection("todo").deleteOne({ _id: new mongo.ObjectID(id) });
 
-export const search = async (mongo: HapiMongo, query: string) =>
+//Search database tasks GET
+export const search = (mongo: HapiMongo, query: string) =>
   mongo.db
-    .collection("ToDoList")
+    .collection("todo")
     .aggregate([
       {
         $searchBeta: {
           search: {
             query: query,
-            path: "title",
+            path: "description",
           },
         },
       },
-      { $project: { ...projection } },
+      { $project: projection },
       { $limit: 10 },
     ])
     .toArray();
+// const projection = {description: 1}
+const projection = Object.fromEntries(
+  Object.keys(toDoList.shape).map((k) => [k, 1])
+);
