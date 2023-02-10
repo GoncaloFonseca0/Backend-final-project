@@ -85,6 +85,23 @@ const putList = Object.freeze<ServerRoute>({
 });
 
 /**
+ * Get all tasks
+ * @handle `GET /search`
+ */
+const getSearch = Object.freeze<ServerRoute>({
+  method: "GET",
+  path: "/search",
+  handler: async (req, _h) => {
+    // get data from request
+    const mongo = req.mongo;
+    const term = req.query.term;
+
+    // call handler (request-agnostic)
+    return search(mongo, term);
+  },
+});
+
+/**
  * Delete a movie from the database
  * @handle `DELETE /{id}`
  */
@@ -101,26 +118,6 @@ const deleteToDoList = Object.freeze<ServerRoute>({
   },
 });
 
-/**
- * Get all movies
- * @handle `GET /search`
- */
-/**
- * Get all tasks
- * @handle `GET /search`
- */
-const getSearch = Object.freeze<ServerRoute>({
-  method: "GET",
-  path: "/search",
-  handler: async (req, _h) => {
-    // get data from request
-    const mongo = req.mongo;
-    const term = req.query.term;
-
-    // call handler (request-agnostic)
-    return search(mongo, term);
-  },
-});
 /**
  * Routes of the plugin `todolist`
  */
